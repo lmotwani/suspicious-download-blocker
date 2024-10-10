@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe Browsing Guard Options</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #495057;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            width: 200px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        .help-text {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .save-message {
+            color: #28a745;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Safe Browsing Guard Options</h1>
+        
+        <div class="section">
+            <h2>Alert Frequency</h2>
+            <label>
+                Show alerts:
+                <select id="alertFrequency">
+                    <option value="always">Every time</option>
+                    <option value="daily">Once per day per domain</option>
+                    <option value="weekly">Once per week per domain</option>
+                    <option value="never">Never</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="section">
+            <h2>Custom Rules</h2>
+            <label>
+                Additional suspicious domains (one per line):
+                <textarea id="customDomains"></textarea>
+                <div class="help-text">
+                    Use * as wildcard, e.g. *.example.com
+                </div>
+            </label>
+
+            <label>
+                Additional suspicious extensions (one per line):
+                <textarea id="customExtensions"></textarea>
+                <div class="help-text">
+                    Include the dot, e.g. .exe
+                </div>
+            </label>
+
+            <label>
+                Trusted domains (one per line):
+                <textarea id="trustedDomains"></textarea>
+                <div class="help-text">
+                    These domains will never trigger warnings
+                </div>
+            </label>
+        </div>
+
+        <button id="saveButton">Save Changes</button>
+        <div id="saveMessage" class="save-message">Settings saved successfully!</div>
+        <div id="errorMessage" class="error-message">Error saving settings. Please try again.</div>
+    </div>
+    <script src="options.js"></script>
+</body>
+</html>

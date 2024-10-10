@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Warning</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .warning-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .warning-header {
+            color: #dc3545;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .warning-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .warning-title {
+            font-size: 1.5em;
+            margin: 0;
+        }
+
+        .warning-content {
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .file-info {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .file-info p {
+            margin: 5px 0;
+            word-break: break-all;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .checkbox-container {
+            margin-top: 15px;
+        }
+
+        #bypassWarnings {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-container">
+        <div class="warning-header">
+            <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <h1 class="warning-title">Download Warning</h1>
+        </div>
+        
+        <div class="warning-content">
+            <p>This download may be unsafe. The file is from a suspicious domain and has a potentially dangerous file extension.</p>
+            
+            <div class="file-info">
+                <p><strong>File:</strong> <span id="filename"></span></p>
+                <p><strong>Source:</strong> <span id="source"></span></p>
+            </div>
+            
+            <p>Are you sure you want to proceed with this download?</p>
+        </div>
+
+        <div class="checkbox-container">
+            <input type="checkbox" id="bypassWarnings">
+            <label for="bypassWarnings">Don't show warnings for this domain for 24 hours</label>
+        </div>
+
+        <div class="button-container">
+            <button id="cancelButton" class="btn btn-danger">Cancel Download</button>
+            <button id="continueButton" class="btn btn-secondary">Continue Download</button>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

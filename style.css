@@ -1,0 +1,35 @@
+body {
+    font-family: sans-serif;
+    width: 400px;
+}
+
+.warning {
+    background-color: #ffeeba;
+    border: 1px solid #ffeeba;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+button {
+    padding: 8px 15px;
+    border: none;
+    cursor: pointer;
+    margin-right: 5px;
+    margin-bottom: 5px; /* Add some space between buttons */
+    transition: opacity 0.3s ease; /* Add hover effect */
+}
+
+
+button:hover {
+    opacity: 0.8;
+}
+
+.danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.success {
+    background-color: #28a745;
+    color: white;
+}
