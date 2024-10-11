@@ -2,6 +2,8 @@
 
 A Chrome extension that protects users from suspicious domains and potentially harmful downloads. This extension helps users make informed decisions about the websites they visit and the files they download.
 
+This Chrome extension is based on data from the LOTS Project (https://lots-project.com/) and FileSec (https://filesec.io). Stay up-to-date with the latest file extensions being used by attackers to ensure the safety of your downloads.
+
 ![Safe Browsing Guard](./docs/images/banner.png)
 
 ## Features
@@ -39,6 +41,15 @@ After installation:
 3. Orange shield icon indicates a suspicious domain
 4. Click the icon for more information about the current site
 5. Configure settings by right-clicking the icon and selecting "Options"
+
+## Data Sources
+This Chrome extension is based on data from the following sources:
+
+    Living Off Trusted Sites (LOTS) Project: The LOTS Project is a research project that aims to understand the threat landscape of the web. The project maintains a list of suspicious domains that are often used by attackers to host malicious content.
+    
+    FileSec: FileSec is a project that aims to provide information about file extensions and their associated risks. The project maintains a list of file extensions that are commonly used by attackers to distribute malware.
+
+Stay up-to-date with the latest data by regularly checking these sources.
 
 ## Contributing
 
