@@ -1,3 +1,13 @@
+// Default user options
+export const defaultUserOptions = {
+    alertFrequency: 'daily',
+    customDomains: [],
+    customExtensions: [],
+    trustedDomains: [],
+    bypassWarningsUntil: {}
+};
+
+// List of suspicious domains (including subdomains)
 export const suspiciousDomains = [
     "raw.githubusercontent.com", "github.com", "1drv.ms", "1drv.com", "docs.google.com",
     "drive.google.com", ".azurewebsites.net", "dropbox.com", "mega.nz", "pcloud.com",
@@ -33,31 +43,68 @@ export const suspiciousDomains = [
     "filecloudonline.com", "tinyurl.com", ".azurestaticapps.net", "termbin.com", "sprunge.us",
     ".plesk.page", "cutt.ly", ".on.aws", ".mystrikingly.com", "www.surveycake.com",
     "anonfiles.com", ".linodeobjects.com", "express.adobe.com", ".fleek.co", "localhost.run",
-    ".requestbin.net", "clbin.com", "ix.io" // ... will add more as needed
-  ];
-  
-  export const suspiciousExtensions = [
-    ".7z", ".a3x", ".appinstaller", ".application", ".appref-ms", ".appx",
-    ".appxbundle", ".arj", ".asd", ".bat", ".bgi", ".bz2", ".cab", ".chm",
-    ".cmd", ".com", ".cpl", ".cs", ".daa", ".desktopthemepackfile", ".diagcab",
-    ".dll", ".dmg", ".doc", ".docm", ".dot", ".dotm", ".eml", ".exe", ".gadget",
-    ".gz", ".hta", ".htm", ".html", ".hwpx", ".ics", ".img", ".iqy", ".iso",
-    ".jar", ".jnlp", ".js", ".jse", ".library-ms", ".lnk", ".mam", ".mht",
-    ".mhtml", ".mof", ".msc", ".msi", ".msrcincident", ".ocx", ".odt", ".oxps",
-    ".pdf", ".pif", ".pot", ".potm", ".ppa", ".ppam", ".ppkg", ".pps", ".ppsm",
-    ".ppt", ".pptm", ".ps1", ".pub", ".py", ".pyc", ".pyo", ".pyw", ".pyz",
-    ".pyzw", ".rar", ".reg", ".rtf", ".scf", ".scpt", ".scr", ".sct",
-    ".searchConnector-ms", ".service", ".settingcontent-ms", ".sh", ".sldm",
-    ".slk", ".so", ".svg", ".tar", ".theme", ".themepack", ".timer", ".url",
-    ".uue", ".vb", ".vbe", ".vbs", ".vhd", ".vhdx", ".wbk", ".website", ".wim",
-    ".wiz", ".ws", ".wsf", ".wsh", ".xlam", ".xll", ".xlm", ".xls", ".xlsb",
-    ".xlsm", ".xlt", ".xltm", ".xps", ".xsl", ".xz", ".z", ".zip"
-  ];
-  
-  export const defaultUserOptions = {
-    alertFrequency: 'daily',
-    customDomains: [],
-    customExtensions: [],
-    trustedDomains: [],
-    bypassWarningsUntil: {},
-  };
+    ".requestbin.net", "clbin.com", "ix.io", ".netlify.com",
+    "sync.com", "yandex.disk", "files.fm", "uptobox.com", "bayfiles.com",
+    "tinyurl.is", "is.gd", "buff.ly", "owl.ly", "goo.gl",
+    ".ddns.net", ".no-ip.com",
+    "jsfiddle.net", "repl.it", "gist.github.com",
+    "discord.gg", "t.me",
+    "zippyshare.com", "anonfile.com", "gofile.io", "uploadfiles.io", "vshare.eu",
+    "userscloud.com", "krakenfiles.com", "mexashare.com", "rapidgator.net", "nitroflare.com",
+    "keep2share.cc", "datafilehost.com", "filefactory.com", "dfiles.ru", "turbobit.net",
+    "hitfile.net", "1fichier.com", "uploadgig.com",
+    "adf.ly", "bc.vc", "ouo.io", "shorte.st", "linkvertise.com",
+    ".hopto.org",
+    "freemyip.com",
+    "pastebin.mozilla.org", "dpaste.com", "gist.githubusercontent.com", "controlc.com",
+    "justpaste.it", "hastebin.com",
+    "sendbig.com", "smash.gg", "sendspace.com",
+    ".xyz", ".top", ".bid", ".loan", ".win",
+    ".aliyun.com",
+    ".cloudsigma.com",
+    "sendgrid.net",
+    "mailgun.net",
+    "strawpoll.me",
+    "web.archive.org"
+];
+
+// Suspicious file extensions
+export const suspiciousExtensions = [
+    ".7z", ".a3x", ".appinstaller", ".application", ".appref-ms", ".appx", ".appxbundle",
+    ".arj", ".asd", ".bat", ".bgi", ".bz2", ".cab", ".chm", ".cmd", ".com", ".cpl", ".cs", ".daa",
+    ".desktopthemepackfile", ".diagcab", ".dll", ".dmg", ".doc", ".docm", ".dot", ".dotm", ".eml",
+    ".exe", ".gadget", ".gz", ".hta", ".htm", ".html", ".hwpx", ".ics", ".img", ".iqy", ".iso",
+    ".jar", ".jnlp", ".js", ".jse", ".library-ms", ".lnk", ".mam", ".mht", ".mhtml", ".mof", ".msc",
+    ".msi", ".msrcincident", ".ocx", ".odt", ".oxps", ".pdf", ".pif", ".pot", ".potm", ".ppa",
+    ".ppam", ".ppkg", ".pps", ".ppsm", ".ppt", ".pptm", ".ps1", ".pub", ".py", ".pyc", ".pyo",
+    ".pyw", ".pyz", ".pyzw", ".rar", ".reg", ".rtf", ".scf", ".scpt", ".scr", ".sct",
+    ".searchConnector-ms", ".service", ".settingcontent-ms", ".sh", ".sldm", ".slk", ".so", ".svg",
+    ".tar", ".theme", ".themepack", ".timer", ".url", ".uue", ".vb", ".vbe", ".vbs", ".vhd", ".vhdx",
+    ".wbk", ".website", ".wim", ".wiz", ".ws", ".wsf", ".wsh", ".xlam", ".xll", ".xlm", ".xls",
+    ".xlsb", ".xlsm", ".xlt", ".xltm", ".xps", ".xsl", ".xz", ".z", ".zip"
+];
+
+// Function to check if a domain is suspicious
+export function isSuspiciousDomain(url) {
+    try {
+        const parsedUrl = new URL(url);
+        const domain = parsedUrl.hostname;
+
+        return suspiciousDomains.some(suspiciousDomain => {
+            if (suspiciousDomain.startsWith('.')) {
+                return domain.endsWith(suspiciousDomain);
+            } else {
+                return domain === suspiciousDomain || domain.endsWith('.' + suspiciousDomain);
+            }
+        });
+    } catch (e) {
+        console.error('Invalid URL:', url);
+        return false;
+    }
+}
+
+// Function to check if a file extension is suspicious
+export function isSuspiciousExtension(fileUrl) {
+    const extension = fileUrl.split('.').pop();
+    return suspiciousExtensions.includes(`.${extension}`);
+}

@@ -4,6 +4,7 @@ import { getWeekNumber, isSuspiciousDomain, isSuspiciousExtension, showSubtleAle
 let userOptions = { ...defaultUserOptions };
 const shownDownloadWarnings = new Set();
 
+// Load user options from storage
 async function loadUserOptions() {
     try {
         const data = await chrome.storage.sync.get(['userOptions']);
@@ -13,6 +14,7 @@ async function loadUserOptions() {
     }
 }
 
+// Save user options to storage
 async function saveUserOptions() {
     try {
         await chrome.storage.sync.set({ userOptions });
@@ -21,9 +23,10 @@ async function saveUserOptions() {
     }
 }
 
+// Mark site as visited
 async function markSiteVisited(domain) {
     try {
-        await chrome.storage.local.set({ 
+        await chrome.storage.local.set({
             [domain]: {
                 lastVisited: Date.now(),
                 date: new Date().getDate()
@@ -34,6 +37,7 @@ async function markSiteVisited(domain) {
     }
 }
 
+// Check if site has been flagged today
 async function hasSiteBeenFlaggedToday(domain) {
     try {
         const data = await chrome.storage.local.get([domain]);
@@ -45,10 +49,11 @@ async function hasSiteBeenFlaggedToday(domain) {
     }
 }
 
+// Mark site as visited this week
 async function markSiteVisitedThisWeek(domain) {
     try {
         const thisWeek = getWeekNumber(new Date());
-        await chrome.storage.local.set({ 
+        await chrome.storage.local.set({
             [`${domain}_week`]: {
                 week: thisWeek,
                 timestamp: Date.now()
@@ -59,6 +64,7 @@ async function markSiteVisitedThisWeek(domain) {
     }
 }
 
+// Check if site has been flagged this week
 async function hasSiteBeenFlaggedThisWeek(domain) {
     try {
         const data = await chrome.storage.local.get([`${domain}_week`]);
@@ -70,6 +76,7 @@ async function hasSiteBeenFlaggedThisWeek(domain) {
     }
 }
 
+// Check URL and show alert if necessary
 async function checkUrlAndShowAlert(url, tabId) {
     if (userOptions.alertFrequency === 'never') return;
 
@@ -86,10 +93,8 @@ async function checkUrlAndShowAlert(url, tabId) {
                 (userOptions.alertFrequency === 'weekly' && !(await hasSiteBeenFlaggedThisWeek(domain)));
 
             if (shouldShow) {
-                await showSubtleAlert(
-                    `This website (${domain}) is flagged as potentially suspicious. Proceed with caution.`,
-                    tabId
-                );
+                const alertMessage = `Warning: This website (${domain}) is flagged as potentially suspicious. Attackers are using popular legitimate domains for phishing, C&C, exfiltration, and downloading malicious tools to evade detection. Proceed with caution.`;
+                await showSubtleAlert(alertMessage, tabId);
 
                 if (userOptions.alertFrequency === 'daily') {
                     await markSiteVisited(domain);
@@ -103,13 +108,42 @@ async function checkUrlAndShowAlert(url, tabId) {
     }
 }
 
+// Update the icon for a specific tab
+async function updateTabIcon(tabId) {
+    try {
+        const tab = await chrome.tabs.get(tabId);
+        if (tab.url) {
+            const isSuspicious = isSuspiciousDomain(tab.url, userOptions, suspiciousDomains);
+            const iconPath = isSuspicious
+                ? {
+                    "16": "icons/icon-warning-svg.png",
+                    "48": "icons/icon-warning-svg.png",
+                    "128": "icons/icon-warning-svg.png"
+                }
+                : {
+                    "16": "icons/icon-svg.png",
+                    "48": "icons/icon-svg.png",
+                    "128": "icons/icon-svg.png"
+                };
+
+            await chrome.action.setIcon({
+                tabId: tabId,
+                path: iconPath
+            });
+        }
+    } catch (error) {
+        console.error("Error updating tab icon:", error);
+    }
+}
+
+// Show warning popup for downloads
 async function showWarningPopup(downloadItem) {
     const uniqueDownloadId = `${downloadItem.url}-${downloadItem.filename}`;
-    
+
     if (shownDownloadWarnings.has(uniqueDownloadId)) return;
-    
+
     shownDownloadWarnings.add(uniqueDownloadId);
-    
+
     const urlParams = new URLSearchParams({
         url: downloadItem.url,
         filename: downloadItem.filename,
@@ -127,47 +161,29 @@ async function showWarningPopup(downloadItem) {
     }
 }
 
-async function updateAllTabIcons() {
-    try {
-        const tabs = await chrome.tabs.query({});
-        for (const tab of tabs) {
-            if (tab.url) {
-                const iconPath = !isSuspiciousDomain(tab.url, userOptions, suspiciousDomains) 
-                    ? {
-                        "16": "icons/icon-svg.png",
-                        "48": "icons/icon-svg.png",
-                        "128": "icons/icon-svg.png"
-                      }
-                    : {
-                        "16": "icons/icon-warning-svg.png",
-                        "48": "icons/icon-warning-svg.png",
-                        "128": "icons/icon-warning-svg.png"
-                      };
-
-                await chrome.action.setIcon({
-                    tabId: tab.id,
-                    path: iconPath
-                });
-            }
-        }
-    } catch (error) {
-        console.error("Error updating all tab icons:", error);
-    }
-}
-
+// Main extension logic
 (async () => {
     await loadUserOptions();
-    await updateAllTabIcons();
+
+    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+        if (changeInfo.status === 'complete' && tab.url) {
+            await updateTabIcon(tabId);
+            await checkUrlAndShowAlert(tab.url, tabId);
+        }
+    });
+
+    chrome.tabs.onActivated.addListener(async (activeInfo) => {
+        await updateTabIcon(activeInfo.tabId);
+    });
 
     chrome.downloads.onCreated.addListener(async (downloadItem) => {
-        if (isSuspiciousDomain(downloadItem.url, userOptions, suspiciousDomains) && 
+        if (isSuspiciousDomain(downloadItem.url, userOptions, suspiciousDomains) || 
             isSuspiciousExtension(downloadItem.filename, userOptions, suspiciousExtensions)) {
             try {
                 await chrome.downloads.pause(downloadItem.id);
                 await showWarningPopup(downloadItem);
             } catch (error) {
-                console.error("Error handling download:", error);
-                await chrome.downloads.resume(downloadItem.id).catch(console.error);
+                console.error("Error handling suspicious download:", error);
             }
         }
     });
@@ -193,26 +209,23 @@ async function updateAllTabIcons() {
                 }
             },
             async bypassWarnings() {
-                try {
-                    const domain = request.domain;
-                    userOptions.bypassWarningsUntil[domain] = Date.now() + (24 * 60 * 60 * 1000);
-                    await saveUserOptions();
-                    sendResponse({ success: true });
-                } catch (error) {
-                    console.error("Error setting bypass:", error);
-                    sendResponse({ success: false, error: error.message });
-                }
+                const domain = request.domain;
+                userOptions.bypassWarningsUntil[domain] = Date.now() + (24 * 60 * 60 * 1000);
+                await saveUserOptions();
+                sendResponse({ success: true });
             },
             async updateUserOptions() {
-                try {
-                    userOptions = request.options;
-                    await saveUserOptions();
-                    await updateAllTabIcons();
-                    sendResponse({ success: true });
-                } catch (error) {
-                    console.error("Error updating options:", error);
-                    sendResponse({ success: false, error: error.message });
+                userOptions = request.options;
+                await saveUserOptions();
+                const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tabs.length > 0) {
+                    await updateTabIcon(tabs[0].id);
                 }
+                sendResponse({ success: true });
+            },
+            async openOptionsPage() {
+                await chrome.runtime.openOptionsPage();
+                sendResponse({ success: true });
             }
         };
 
@@ -220,78 +233,6 @@ async function updateAllTabIcons() {
         if (handler) {
             handler();
             return true; // Keep the message channel open for async response
-        }
-    });
-
-    chrome.alarms.create('resetDailyData', { periodInMinutes: 24 * 60 });
-
-    chrome.alarms.onAlarm.addListener((alarm) => {
-        if (alarm.name === 'resetDailyData') {
-            chrome.storage.local.clear();
-            shownDownloadWarnings.clear();
-
-            Object.keys(userOptions.bypassWarningsUntil).forEach(domain => {
-                if (userOptions.bypassWarningsUntil[domain] < Date.now()) {
-                    delete userOptions.bypassWarningsUntil[domain];
-                }
-            });
-            
-            saveUserOptions();
-        }
-    });
-
-    chrome.webRequest.onCompleted.addListener(
-        async (details) => {
-            if (details.tabId > -1 && isSuspiciousDomain(details.url, userOptions, suspiciousDomains)) {
-                try {
-                    await chrome.action.setIcon({
-                        tabId: details.tabId,
-                        path: {
-                            "16": "icons/icon-warning-svg.png",
-                            "48": "icons/icon-warning-svg.png",
-                            "128": "icons/icon-warning-svg.png"
-                        }
-                    });
-                    await checkUrlAndShowAlert(details.url, details.tabId);
-                } catch (error) {
-                    console.error("Error updating icon:", error);
-                }
-            }
-        },
-        { urls: ["<all_urls>"] }
-    );
-
-    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-        if (changeInfo.url) {
-            try {
-                const iconPath = !isSuspiciousDomain(changeInfo.url, userOptions, suspiciousDomains) 
-                    ? {
-                        "16": "icons/icon-svg.png",
-                        "48": "icons/icon-svg.png",
-                        "128": "icons/icon-svg.png"
-                      }
-                    : {
-                        "16": "icons/icon-warning-svg.png",
-                        "48": "icons/icon-warning-svg.png",
-                        "128": "icons/icon-warning-svg.png"
-                      };
-
-                await chrome.action.setIcon({
-                    tabId: tabId,
-                    path: iconPath
-                });
-            } catch (error) {
-                console.error("Error updating tab icon:", error);
-            }
-        }
-    });
-
-    chrome.action.onClicked.addListener((tab) => {
-        if (isSuspiciousDomain(tab.url, userOptions, suspiciousDomains)) {
-            const domain = new URL(tab.url).hostname;
-            const transparencyReportUrl = 
-                `https://transparencyreport.google.com/safe-browsing/search?url=${encodeURIComponent(domain)}`;
-            chrome.tabs.create({ url: transparencyReportUrl });
         }
     });
 })();
