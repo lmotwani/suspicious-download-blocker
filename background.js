@@ -4,6 +4,26 @@ import { getWeekNumber, isSuspiciousDomain, isSuspiciousExtension, showSubtleAle
 let userOptions = { ...defaultUserOptions };
 const shownDownloadWarnings = new Set();
 
+// Educational Resources
+const educationalResources = [
+    {
+        title: "Understanding Phishing Attacks",
+        url: "https://consumer.ftc.gov/articles/how-recognize-and-avoid-phishing-scams"
+    },
+    {
+        title: "Malware Prevention Tips",
+        url: "https://consumer.ftc.gov/articles/malware-how-protect-against-detect-and-remove-it"
+    },
+    {
+        title: "Safe Browsing Practices",
+        url: "https://www.techtarget.com/searchsecurity/definition/malware"
+    },
+    {
+        title: "Scan files with VirusTotal",
+        url: "https://www.virustotal.com/gui/home/upload"
+    }
+];
+
 // Load user options from storage
 async function loadUserOptions() {
     try {
@@ -121,9 +141,9 @@ async function updateTabIcon(tabId) {
                     "128": "icons/icon-warning-svg.png"
                 }
                 : {
-                    "16": "icons/icon-svg.png",
-                    "48": "icons/icon-svg.png",
-                    "128": "icons/icon-svg.png"
+                    "16": "icons/icon16.png",
+                    "48": "icons/icon48.png",
+                    "128": "icons/icon128.png"
                 };
 
             await chrome.action.setIcon({
@@ -157,7 +177,6 @@ async function showWarningPopup(downloadItem) {
         });
     } catch (error) {
         console.error("Error showing warning popup:", error);
-        await chrome.downloads.resume(downloadItem.id).catch(console.error);
     }
 }
 
@@ -180,8 +199,11 @@ async function showWarningPopup(downloadItem) {
         if (isSuspiciousDomain(downloadItem.url, userOptions, suspiciousDomains) || 
             isSuspiciousExtension(downloadItem.filename, userOptions, suspiciousExtensions)) {
             try {
-                await chrome.downloads.pause(downloadItem.id);
-                await showWarningPopup(downloadItem);
+                const downloadState = await chrome.downloads.search({ id: downloadItem.id });
+                if (downloadState[0] && downloadState[0].state === 'in_progress') {
+                    await chrome.downloads.pause(downloadItem.id);
+                    await showWarningPopup(downloadItem);
+                }
             } catch (error) {
                 console.error("Error handling suspicious download:", error);
             }
@@ -194,6 +216,7 @@ async function showWarningPopup(downloadItem) {
                 try {
                     await chrome.downloads.resume(request.downloadId);
                     sendResponse({ success: true });
+                    chrome.tabs.create({ url: 'chrome://downloads/' });
                 } catch (error) {
                     console.error("Error continuing download:", error);
                     sendResponse({ success: false, error: error.message });
@@ -226,6 +249,9 @@ async function showWarningPopup(downloadItem) {
             async openOptionsPage() {
                 await chrome.runtime.openOptionsPage();
                 sendResponse({ success: true });
+            },
+            getEducationalResources() {
+                sendResponse({ success: true, resources: educationalResources });
             }
         };
 
@@ -241,9 +267,9 @@ chrome.runtime.onInstalled.addListener(async () => {
     try {
         await chrome.action.setIcon({
             path: {
-                "16": "icons/icon-svg.png",
-                "48": "icons/icon-svg.png",
-                "128": "icons/icon-svg.png"
+                "16": "icons/icon16.png",
+                "48": "icons/icon48.png",
+                "128": "icons/icon128.png"
             }
         });
     } catch (error) {

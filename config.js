@@ -65,7 +65,8 @@ export const suspiciousDomains = [
     "sendgrid.net",
     "mailgun.net",
     "strawpoll.me",
-    "web.archive.org"
+    "web.archive.org",
+    "mega.io" // Added here
 ];
 
 // Suspicious file extensions

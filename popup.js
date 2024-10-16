@@ -15,18 +15,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update warning message
     const warningContent = document.querySelector('.warning-content');
     warningContent.innerHTML = `
-        <p>Warning: This download may be unsafe. The file is from a potentially suspicious domain and could contain malware or other malicious content.</p>
+        <p>Warning: This file has been downloaded from a potentially suspicious domain or has a suspicious file extension.</p>
         
         <div class="file-info">
             <p><strong>File:</strong> <span id="filename">${filename || 'Unknown'}</span></p>
             <p><strong>Source:</strong> <span id="source">${url || 'Unknown'}</span></p>
         </div>
         
-        <p>Attackers often use legitimate-looking files to distribute malware. Proceed with caution.</p>
-        <p>Are you sure you want to continue with this download?</p>
+        <p>Attackers often use legitimate-looking files to distribute malware. Exercise caution when running, installing, or using this file.</p>
+        <p>If you trust this file to be legitimate, you may proceed. Otherwise, consider the following steps:</p>
+        <ul>
+            <li>Delete the file if you don't recognize or trust its source.</li>
+            <li><a href="https://www.virustotal.com/gui/home/upload" target="_blank">Scan the file with VirusTotal</a> before using it.</li>
+            <li>Contact the file provider through a trusted channel to verify its authenticity.</li>
+        </ul>
         <p><a href="#" id="learnMore">Learn More about online safety</a></p>
-        ${resources.length > 0 ? `<p><a href="${resources[0].url}" target="_blank" id="learnMoreResource">${resources[0].title}</a></p>` : ''}
+        <button id="closeButton">Close</button>
     `;
+
+    // Add educational resources
+    if (resources.length > 0) {
+        const resourcesList = document.createElement('ul');
+        resources.forEach(resource => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = resource.url;
+            a.textContent = resource.title;
+            a.target = '_blank';
+            li.appendChild(a);
+            resourcesList.appendChild(li);
+        });
+        warningContent.appendChild(resourcesList);
+    }
 
     // Handle "Learn More" link click
     document.getElementById('learnMore').addEventListener('click', async (e) => {
@@ -38,6 +58,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error opening options page:', error);
             showError("Failed to open options page.");
         }
+    });
+
+    // Handle close button click
+    document.getElementById('closeButton').addEventListener('click', () => {
+        window.close();
     });
 
     // Handle cancel button click

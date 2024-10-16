@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadEducationalResources();
     } catch (error) {
         console.error('Error loading options:', error);
-        showError();
+        showError("Failed to load options.");
     }
 });
 
@@ -69,7 +69,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         showSuccess();
     } catch (error) {
         console.error('Error saving options:', error);
-        showError();
+        showError("Failed to save options.");
     }
 });
 
@@ -103,9 +103,11 @@ async function loadEducationalResources() {
             });
         } else {
             console.error('Failed to fetch educational resources');
+            showError("Failed to load educational resources.");
         }
     } catch (error) {
         console.error('Error loading educational resources:', error);
+        showError("Failed to load educational resources.");
     }
 }
 
@@ -115,13 +117,14 @@ function showSuccess() {
     
     error.style.display = 'none';
     message.style.display = 'block';
+    message.textContent = "Options saved successfully!";
     
     setTimeout(() => {
         message.style.display = 'none';
     }, 3000);
 }
 
-function showError(message = "An error occurred while saving options.") {
+function showError(message) {
     const errorMessage = document.getElementById('errorMessage');
     const saveMessage = document.getElementById('saveMessage');
     
