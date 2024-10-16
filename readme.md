@@ -36,11 +36,11 @@ This Chrome extension is based on data from the LOTS Project (https://lots-proje
 ## Usage
 
 After installation:
-1. The extension icon will appear in your Chrome toolbar
-2. ✅ Green tick default extension icon indicates normal browsing and the domain not belonging to our list of suspicious domains
-3. 🛡️ Orange shield icon indicates a suspicious domain
-4. Click the icon for more information about the current site
-5. Configure settings by right-clicking the icon and selecting "Options"
+1. The extension icon ✅ will appear in your Chrome toolbar.
+2. ✅ A green tick icon indicates normal browsing, meaning the domain does not belong to our list of suspicious domains.
+3. 🛡️ An orange shield icon indicates a suspicious domain.
+4. ✅ Click the icon for more information on educational resources about safe browsing and to access extension options for adding or removing the current site from the trusted or suspicious domains list.
+5. ☕ Use the "Buy Me a Coffee" link on the options page to support future development. 
 
 ## Data Sources
 This Chrome extension is based on data from the following sources:
