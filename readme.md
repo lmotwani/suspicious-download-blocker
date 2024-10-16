@@ -37,8 +37,8 @@ This Chrome extension is based on data from the LOTS Project (https://lots-proje
 
 After installation:
 1. The extension icon will appear in your Chrome toolbar
-2. Green shield icon indicates safe browsing
-3. Orange shield icon indicates a suspicious domain
+2. ✅ Green tick default extension icon indicates normal browsing and the domain not belonging to our list of suspicious domains
+3. 🛡️ Orange shield icon indicates a suspicious domain
 4. Click the icon for more information about the current site
 5. Configure settings by right-clicking the icon and selecting "Options"
 
