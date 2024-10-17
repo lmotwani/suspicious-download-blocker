@@ -113,7 +113,7 @@ async function checkUrlAndShowAlert(url, tabId) {
                 (userOptions.alertFrequency === 'weekly' && !(await hasSiteBeenFlaggedThisWeek(domain)));
 
             if (shouldShow) {
-                const alertMessage = `Warning: This website (${domain}) is flagged as potentially suspicious. Attackers are using popular legitimate domains for phishing, C&C, exfiltration, and downloading malicious tools to evade detection. Proceed with caution.`;
+                const alertMessage = `Warning: This website (${domain}) or one of its subdomains is flagged as potentially suspicious. Attackers may use it for phishing or malware distribution. Proceed with caution.`;
                 await showSubtleAlert(alertMessage, tabId);
 
                 if (userOptions.alertFrequency === 'daily') {
@@ -132,7 +132,7 @@ async function checkUrlAndShowAlert(url, tabId) {
 async function updateTabIcon(tabId) {
     try {
         const tab = await chrome.tabs.get(tabId);
-        if (tab.url) {
+        if (tab && tab.url) {
             const isSuspicious = isSuspiciousDomain(tab.url, userOptions, suspiciousDomains);
             const iconPath = isSuspicious
                 ? {
@@ -199,11 +199,8 @@ async function showWarningPopup(downloadItem) {
         if (isSuspiciousDomain(downloadItem.url, userOptions, suspiciousDomains) || 
             isSuspiciousExtension(downloadItem.filename, userOptions, suspiciousExtensions)) {
             try {
-                const downloadState = await chrome.downloads.search({ id: downloadItem.id });
-                if (downloadState[0] && downloadState[0].state === 'in_progress') {
-                    await chrome.downloads.pause(downloadItem.id);
-                    await showWarningPopup(downloadItem);
-                }
+                await chrome.downloads.pause(downloadItem.id);
+                await showWarningPopup(downloadItem);
             } catch (error) {
                 console.error("Error handling suspicious download:", error);
             }
@@ -216,7 +213,10 @@ async function showWarningPopup(downloadItem) {
                 try {
                     await chrome.downloads.resume(request.downloadId);
                     sendResponse({ success: true });
-                    chrome.tabs.create({ url: 'chrome://downloads/' });
+                    // Close the popup
+                    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                        chrome.tabs.remove(tabs[0].id);
+                    });
                 } catch (error) {
                     console.error("Error continuing download:", error);
                     sendResponse({ success: false, error: error.message });
@@ -225,7 +225,15 @@ async function showWarningPopup(downloadItem) {
             async cancelDownload() {
                 try {
                     await chrome.downloads.cancel(request.downloadId);
+                    const downloadItem = await chrome.downloads.search({id: request.downloadId});
+                    if (downloadItem[0] && downloadItem[0].filename) {
+                        await chrome.downloads.removeFile(request.downloadId);
+                    }
                     sendResponse({ success: true });
+                    // Close the popup
+                    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                        chrome.tabs.remove(tabs[0].id);
+                    });
                 } catch (error) {
                     console.error("Error canceling download:", error);
                     sendResponse({ success: false, error: error.message });
@@ -275,4 +283,9 @@ chrome.runtime.onInstalled.addListener(async () => {
     } catch (error) {
         console.error("Error setting default icon:", error);
     }
+});
+
+// Make extension icon clickable
+chrome.action.onClicked.addListener((tab) => {
+    chrome.runtime.openOptionsPage();
 });

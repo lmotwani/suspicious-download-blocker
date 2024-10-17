@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 action: 'cancelDownload',
                 downloadId: downloadId
             });
-            window.close();
+            // Removed window.close() as it's now handled by the background script
         } catch (error) {
             console.error('Error canceling download:', error);
             showError("Failed to cancel download.");
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 downloadId: downloadId
             });
             
-            window.close();
+            // Removed window.close() as it's now handled by the background script
         } catch (error) {
             console.error('Error continuing download:', error);
             showError("Failed to continue download.");

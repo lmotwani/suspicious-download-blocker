@@ -15,7 +15,6 @@ export function isSuspiciousDomain(url, userOptions, suspiciousDomains) {
             return false;
         }
 
-        // Check if userOptions is defined before accessing its properties
         if (userOptions && userOptions.trustedDomains) {
             if (userOptions.trustedDomains.some(domain => 
                 hostname === domain || (domain.startsWith('*.') && hostname.endsWith(domain.substring(2))))) {
@@ -23,7 +22,6 @@ export function isSuspiciousDomain(url, userOptions, suspiciousDomains) {
             }
         }
 
-        // Check if userOptions is defined before accessing its properties
         if (userOptions && userOptions.customDomains) {
             if (userOptions.customDomains.some(domain => 
                 hostname === domain || (domain.startsWith('*.') && hostname.endsWith(domain.substring(2))))) {
@@ -56,30 +54,32 @@ export async function showSubtleAlert(message, tabId) {
         func: (message) => {
             const alertElement = document.createElement('div');
             alertElement.innerHTML = `
-                ${message}
-                <a href="https://www.google.com/about/company/google-safe-browsing/" 
-                   target="_blank" 
-                   style="margin-left: 10px; color: #0066cc; text-decoration: underline;">
-                Learn More
-                </a>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="flex-grow: 1;">${message}</span>
+                    <button id="closeAlertBtn" style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; cursor: pointer; font-size: 16px; color: #721c24; padding: 5px 10px; margin-left: 10px;">Close</button>
+                </div>
+                <button id="changeOptionsBtn" 
+                   style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                Change Options
+                </button>
             `;
             
             alertElement.style.cssText = `
                 position: fixed;
-                top: 0;
-                left: 50%;
-                transform: translateX(-50%);
-                background-color: #ffeeba;
-                padding: 10px 20px;
-                border: 1px solid #c3e6cb;
+                top: 10px;
+                right: 10px;
+                background-color: #fff3cd;
+                padding: 15px;
+                border: 1px solid #ffeeba;
                 border-radius: 4px;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 z-index: 2147483647;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
                 font-size: 14px;
-                color: #333;
+                color: #856404;
                 opacity: 0;
                 transition: opacity 0.5s ease-in-out;
+                max-width: 300px;
             `;
 
             document.body.appendChild(alertElement);
@@ -88,10 +88,21 @@ export async function showSubtleAlert(message, tabId) {
                 alertElement.style.opacity = '1';
             });
 
+            const closeBtn = alertElement.querySelector('#closeAlertBtn');
+            closeBtn.addEventListener('click', () => {
+                alertElement.style.opacity = '0';
+                setTimeout(() => alertElement.remove(), 500);
+            });
+
+            const changeOptionsBtn = alertElement.querySelector('#changeOptionsBtn');
+            changeOptionsBtn.addEventListener('click', () => {
+                chrome.runtime.sendMessage({ action: 'openOptionsPage' });
+            });
+
             setTimeout(() => {
                 alertElement.style.opacity = '0';
                 setTimeout(() => alertElement.remove(), 500);
-            }, 5000);
+            }, 60000); // 60 seconds
         },
         args: [message]
     });
