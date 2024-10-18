@@ -187,7 +187,6 @@ async function showWarningPopup(downloadItem) {
     }
 }
 
-// New function to export options
 function exportOptions() {
     const exportData = JSON.stringify(userOptions);
     const blob = new Blob([exportData], {type: 'application/json'});
@@ -198,7 +197,6 @@ function exportOptions() {
     });
 }
 
-// New function to import options
 async function importOptions(fileContent) {
     try {
         const importedOptions = JSON.parse(fileContent);
@@ -222,7 +220,7 @@ async function importOptions(fileContent) {
     }
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-        if (changeInfo.status === 'complete' && tab.url) {
+        if (changeInfo.status === 'complete' && tab.url && tab.url.startsWith('http')) {
             await updateTabIcon(tabId);
             await checkUrlAndShowAlert(tab.url, tabId);
         }
@@ -230,21 +228,25 @@ async function importOptions(fileContent) {
 
     chrome.tabs.onActivated.addListener(async (activeInfo) => {
         const tab = await chrome.tabs.get(activeInfo.tabId);
-        if (tab.url) {
+        if (tab.url && tab.url.startsWith('http')) {
             await updateTabIcon(activeInfo.tabId);
             await checkUrlAndShowAlert(tab.url, activeInfo.tabId);
         }
     });
 
     chrome.downloads.onCreated.addListener(async (downloadItem) => {
-        if (isSuspiciousDomain(downloadItem.url, userOptions, suspiciousDomains) || 
-            isSuspiciousExtension(downloadItem.filename, userOptions, suspiciousExtensions)) {
-            try {
+        try {
+            const url = new URL(downloadItem.url);
+            const domain = url.hostname;
+            
+            if (isSuspiciousDomain(downloadItem.url, userOptions, suspiciousDomains) || 
+                isSuspiciousExtension(downloadItem.filename, userOptions, suspiciousExtensions) ||
+                bloomFilter.contains(domain)) {
                 await chrome.downloads.pause(downloadItem.id);
                 await showWarningPopup(downloadItem);
-            } catch (error) {
-                console.error("Error handling suspicious download:", error);
             }
+        } catch (error) {
+            console.error("Error handling suspicious download:", error);
         }
     });
 
