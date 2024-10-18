@@ -29,7 +29,8 @@ export function isSuspiciousDomain(url, userOptions, suspiciousDomains) {
             }
         }
 
-        return suspiciousDomains.some(domain => 
+        // Convert Set to Array for .some() method
+        return Array.from(suspiciousDomains).some(domain => 
             hostname === domain || (domain.startsWith('.') && hostname.endsWith(domain)));
     } catch (error) {
         console.error("Error parsing URL:", error, url);
@@ -45,7 +46,7 @@ export function isSuspiciousExtension(filename, userOptions, suspiciousExtension
     const lowerFilename = filename.toLowerCase();
     return (userOptions && userOptions.customExtensions ? 
         userOptions.customExtensions.some(ext => lowerFilename.endsWith(ext)) : false) ||
-           suspiciousExtensions.some(ext => lowerFilename.endsWith(ext));
+           Array.from(suspiciousExtensions).some(ext => lowerFilename.endsWith(ext));
 }
 
 export async function showSubtleAlert(message, tabId) {
@@ -82,7 +83,7 @@ export async function showSubtleAlert(message, tabId) {
                 max-width: 300px;
             `;
 
-            document.body.appendChild(alertElement);
+            (document.body || document.documentElement).appendChild(alertElement);
             
             requestAnimationFrame(() => {
                 alertElement.style.opacity = '1';

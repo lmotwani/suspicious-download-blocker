@@ -1,10 +1,10 @@
 # Safe Browsing Guard
 
-A Chrome extension that protects users from suspicious domains and potentially harmful downloads. This extension helps users make informed decisions about the websites they visit and the files they download.
+A Chrome extension that provides an additional layer of security by protecting users from suspicious domains and potentially harmful downloads. This extension helps users make informed decisions about the websites they visit and the files they download.
 
-This Chrome extension is based on data from the LOTS Project (https://lots-project.com/) and FileSec (https://filesec.io). Stay up-to-date with the latest file extensions being used by attackers to ensure the safety of your downloads.
+Safe Browsing Guard is designed to complement existing security systems by focusing on sites that are normally considered safe but may be used by attackers for phishing, command and control, data exfiltration, and malware distribution.
 
-## Features
+## Key Features
 - 🛡️ Monitors suspicious domains and file downloads
 - ⚡ Real-time website safety checks
 - 🔔 Configurable alert frequency
@@ -12,6 +12,7 @@ This Chrome extension is based on data from the LOTS Project (https://lots-proje
 - 🔒 Privacy-focused with local processing
 - 📋 Detailed download warnings
 - ⚙️ Customizable settings
+- ✅ Whitelist trusted domains
 
 ## Installation
 
@@ -19,6 +20,7 @@ This Chrome extension is based on data from the LOTS Project (https://lots-proje
 1. Visit the Chrome Web Store page
 2. Click "Add to Chrome"
 3. Confirm the installation
+4. Pin the extension to your toolbar for easy access and visibility of warning icons
 
 ### From Source (Developer Mode)
 Clone this repository:
@@ -31,15 +33,17 @@ git clone https://github.com/yourusername/safe-browsing-guard.git
 2. Enable "Developer mode" in the top right
 3. Click "Load unpacked"
 4. Select the cloned repository folder
+5. Pin the extension to your toolbar for easy access and visibility of warning icons
 
 ## Usage
 
 After installation:
-1. The extension icon ✅ will appear in your Chrome toolbar.
+1. The extension icon ✅ will appear in your Chrome toolbar. Make sure to pin it for better visibility of warning icons.
 2. ✅ A green tick icon indicates normal browsing, meaning the domain does not belong to our list of suspicious domains.
 3. 🛡️ An orange shield icon indicates a suspicious domain.
-4. ✅ Click the icon for more information on educational resources about safe browsing and to access extension options for adding or removing the current site from the trusted or suspicious domains list.
-5. ☕ Use the "Buy Me a Coffee" link on the options page to support future development.
+4. When visiting a suspicious domain, you'll receive an alert with an option to whitelist the domain if you trust it.
+5. ✅ Click the extension icon for more information on educational resources about safe browsing and to access extension options.
+6. ☕ Use the "Buy Me a Coffee" link on the options page to support future development.
 
 ## Data Sources
 
@@ -100,3 +104,6 @@ This extension does not collect or transmit any user data. All processing is don
 ## Credits
 - Icons based on [Lucide Icons](https://lucide.dev/)
 - Created by Lokesh Motwani
+
+## Important Note
+For the best protection, please pin this extension to your toolbar for easy access and visibility of warning icons. This ensures that you can quickly see the status of the current website and access the extension's features.

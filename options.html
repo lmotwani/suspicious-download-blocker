@@ -4,171 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safe Browsing Guard Options</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-
-        .container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        .section {
-            margin-bottom: 30px;
-        }
-
-        .section h2 {
-            color: #495057;
-            font-size: 1.2em;
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        select {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ced4da;
-            width: 200px;
-        }
-
-        textarea {
-            width: 100%;
-            height: 100px;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ced4da;
-            resize: vertical;
-            font-family: monospace;
-        }
-
-        .help-text {
-            font-size: 0.9em;
-            color: #6c757d;
-            margin-top: 5px;
-        }
-
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .save-message {
-            color: #28a745;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .error-message {
-            color: #dc3545;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .resources-list {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .resources-list li {
-            margin-bottom: 10px;
-        }
-
-        .resources-list a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .resources-list a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" href="options.css">
 </head>
 <body>
     <div class="container">
         <h1>Safe Browsing Guard Options</h1>
         
-        <div class="section">
+        <section class="section">
             <h2>Educational Resources</h2>
-            <ul id="resourcesList" class="resources-list">
-                <!-- This list will be populated by JavaScript -->
-            </ul>
-        </div>
+            <ul id="resourcesList" class="resources-list"></ul>
+        </section>
 
-        <div class="section">
-            <h2>Alert Frequency</h2>
-            <label>
-                Show alerts:
-                <select id="alertFrequency">
-                    <option value="always">Every time</option>
-                    <option value="daily">Once per day per domain</option>
-                    <option value="weekly">Once per week per domain</option>
-                    <option value="never">Never</option>
-                </select>
-            </label>
-        </div>
+        <section class="section">
+            <h2>Alert Settings</h2>
+            <label for="alertFrequency">Show alerts:</label>
+            <select id="alertFrequency">
+                <option value="always">Always</option>
+                <option value="daily">Once per day per domain</option>
+                <option value="weekly">Once per week per domain</option>
+                <option value="never">Never</option>
+            </select>
+        </section>
 
-        <div class="section">
+        <section class="section">
             <h2>Custom Rules</h2>
-            <label>
-                Additional suspicious domains (one per line):
-                <textarea id="customDomains"></textarea>
-                <div class="help-text">
-                    Use * as wildcard, e.g. *.example.com
-                </div>
-            </label>
+            <label for="customDomains">Additional suspicious domains (one per line):</label>
+            <textarea id="customDomains" rows="5"></textarea>
 
-            <label>
-                Additional suspicious extensions (one per line):
-                <textarea id="customExtensions"></textarea>
-                <div class="help-text">
-                    Include the dot, e.g. .exe
-                </div>
-            </label>
+            <label for="customExtensions">Additional suspicious extensions (one per line):</label>
+            <textarea id="customExtensions" rows="5"></textarea>
 
-            <label>
-                Trusted domains (one per line):
-                <textarea id="trustedDomains"></textarea>
-                <div class="help-text">
-                    These domains will never trigger warnings
-                </div>
-            </label>
-        </div>
+            <label for="trustedDomains">Trusted domains (one per line):</label>
+            <textarea id="trustedDomains" rows="5"></textarea>
+        </section>
+
+        <section class="section">
+            <h2>Import/Export Options</h2>
+            <div class="button-group">
+                <button id="exportButton">Export Options</button>
+                <label for="importInput" class="file-input-label">
+                    Import Options
+                    <input type="file" id="importInput" accept=".json">
+                </label>
+            </div>
+        </section>
 
         <button id="saveButton">Save Changes</button>
-        <div id="saveMessage" class="save-message">Settings saved successfully!</div>
-        <div id="errorMessage" class="error-message">Error saving settings. Please try again.</div>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <section class="section support-section">
+            <h2>Support the Project</h2>
+            <a href="https://www.buymeacoffee.com/lokeshmotwani" target="_blank">
+                <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" class="bmc-button">
+            </a>
+        </section>
     </div>
     <script src="options.js"></script>
 </body>
-<div class="section">
-    <h2>Support the Project</h2>
-    <a href="https://www.buymeacoffee.com/lokeshmotwani" target="_blank">
-        <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;">
-    </a>
-</div>
 </html>

@@ -1,138 +1,156 @@
-// Load saved options when the page is opened
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const data = await chrome.storage.sync.get(['userOptions']);
-        const options = data.userOptions || {
-            alertFrequency: 'daily',
-            customDomains: [],
-            customExtensions: [],
-            trustedDomains: [],
-            bypassWarningsUntil: {}
-        };
+document.addEventListener('DOMContentLoaded', initializeOptions);
 
-        // Populate form fields
-        document.getElementById('alertFrequency').value = options.alertFrequency;
-        document.getElementById('customDomains').value = options.customDomains.join('\n');
-        document.getElementById('customExtensions').value = options.customExtensions.join('\n');
-        document.getElementById('trustedDomains').value = options.trustedDomains.join('\n');
-
-        // Fetch and display educational resources
-        await loadEducationalResources();
-    } catch (error) {
-        console.error('Error loading options:', error);
-        showError("Failed to load options.");
-    }
-});
-
-// Save options when the save button is clicked
-document.getElementById('saveButton').addEventListener('click', async () => {
-    try {
-        const customDomains = document.getElementById('customDomains').value
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => line);
-        const customExtensions = document.getElementById('customExtensions').value
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => line);
-        const trustedDomains = document.getElementById('trustedDomains').value
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => line);
-
-        // Validate inputs
-        if (!validateDomains(customDomains) || !validateDomains(trustedDomains)) {
-            showError("Please enter valid domains.");
-            return;
-        }
-        if (!validateExtensions(customExtensions)) {
-            showError("Please enter valid extensions.");
-            return;
-        }
-
-        const options = {
-            alertFrequency: document.getElementById('alertFrequency').value,
-            customDomains: customDomains,
-            customExtensions: customExtensions,
-            trustedDomains: trustedDomains,
-            bypassWarningsUntil: {}
-        };
-
-        await chrome.storage.sync.set({ userOptions: options });
-        
-        // Notify background script of the update
-        await chrome.runtime.sendMessage({
-            action: 'updateUserOptions',
-            options: options
-        });
-
-        showSuccess();
-    } catch (error) {
-        console.error('Error saving options:', error);
-        showError("Failed to save options.");
-    }
-});
-
-// Validate domain format
-function validateDomains(domains) {
-    const domainPattern = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; // Basic domain validation
-    return domains.every(domain => domainPattern.test(domain));
+async function initializeOptions() {
+    await loadOptions();
+    await loadEducationalResources();
+    setupEventListeners();
 }
 
-// Validate extension format
-function validateExtensions(extensions) {
-    const extensionPattern = /^\.[a-zA-Z0-9]+$/; // Basic extension validation
-    return extensions.every(ext => extensionPattern.test(ext));
+async function loadOptions() {
+    try {
+        const { userOptions } = await chrome.storage.sync.get('userOptions');
+        const options = userOptions || getDefaultOptions();
+        populateFormFields(options);
+    } catch (error) {
+        showStatusMessage('Error loading options. Please try again.', 'error');
+    }
 }
 
-// Load educational resources
+function getDefaultOptions() {
+    return {
+        alertFrequency: 'daily',
+        customDomains: [],
+        customExtensions: [],
+        trustedDomains: []
+    };
+}
+
+function populateFormFields(options) {
+    document.getElementById('alertFrequency').value = options.alertFrequency;
+    document.getElementById('customDomains').value = options.customDomains.join('\n');
+    document.getElementById('customExtensions').value = options.customExtensions.join('\n');
+    document.getElementById('trustedDomains').value = options.trustedDomains.join('\n');
+}
+
 async function loadEducationalResources() {
     try {
         const response = await chrome.runtime.sendMessage({ action: 'getEducationalResources' });
-        if (response.success) {
-            const resourcesList = document.getElementById('resourcesList');
-            resourcesList.innerHTML = ''; // Clear existing content
-            response.resources.forEach(resource => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = resource.url;
-                a.textContent = resource.title;
-                a.target = '_blank'; // Open in new tab
-                li.appendChild(a);
-                resourcesList.appendChild(li);
-            });
+        if (response && response.success) {
+            displayEducationalResources(response.resources);
         } else {
-            console.error('Failed to fetch educational resources');
-            showError("Failed to load educational resources.");
+            throw new Error('Failed to fetch educational resources');
         }
     } catch (error) {
         console.error('Error loading educational resources:', error);
-        showError("Failed to load educational resources.");
     }
 }
 
-function showSuccess() {
-    const message = document.getElementById('saveMessage');
-    const error = document.getElementById('errorMessage');
-    
-    error.style.display = 'none';
-    message.style.display = 'block';
-    message.textContent = "Options saved successfully!";
-    
-    setTimeout(() => {
-        message.style.display = 'none';
-    }, 3000);
+function displayEducationalResources(resources) {
+    const resourcesList = document.getElementById('resourcesList');
+    resourcesList.innerHTML = '';
+    resources.forEach(resource => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = resource.url;
+        a.textContent = resource.title;
+        a.target = '_blank';
+        li.appendChild(a);
+        resourcesList.appendChild(li);
+    });
 }
 
-function showError(message) {
-    const errorMessage = document.getElementById('errorMessage');
-    const saveMessage = document.getElementById('saveMessage');
-    
-    saveMessage.style.display = 'none';
-    errorMessage.textContent = message;
-    errorMessage.style.display = 'block';
-    
+function setupEventListeners() {
+    document.getElementById('saveButton').addEventListener('click', saveOptions);
+    document.getElementById('exportButton').addEventListener('click', exportOptions);
+    document.getElementById('importInput').addEventListener('change', importOptions);
+}
+
+async function saveOptions() {
+    try {
+        const options = gatherFormData();
+        await validateOptions(options);
+        await saveOptionsToStorage(options);
+        await updateBackgroundScript(options);
+        showStatusMessage('Options saved successfully!', 'success');
+    } catch (error) {
+        showStatusMessage(error.message, 'error');
+    }
+}
+
+function gatherFormData() {
+    return {
+        alertFrequency: document.getElementById('alertFrequency').value,
+        customDomains: getCleanedTextareaValues('customDomains'),
+        customExtensions: getCleanedTextareaValues('customExtensions'),
+        trustedDomains: getCleanedTextareaValues('trustedDomains')
+    };
+}
+
+function getCleanedTextareaValues(id) {
+    return document.getElementById(id).value
+        .split('\n')
+        .map(item => item.trim())
+        .filter(Boolean);
+}
+
+async function validateOptions(options) {
+    if (!['always', 'daily', 'weekly', 'never'].includes(options.alertFrequency)) {
+        throw new Error('Invalid alert frequency selected.');
+    }
+    // Add more validation as needed
+}
+
+async function saveOptionsToStorage(options) {
+    await chrome.storage.sync.set({ userOptions: options });
+}
+
+async function updateBackgroundScript(options) {
+    await chrome.runtime.sendMessage({ action: 'updateUserOptions', options });
+}
+
+async function exportOptions() {
+    try {
+        const { userOptions } = await chrome.storage.sync.get('userOptions');
+        const blob = new Blob([JSON.stringify(userOptions, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'safe_browsing_guard_options.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        showStatusMessage('Error exporting options. Please try again.', 'error');
+    }
+}
+
+function importOptions(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const options = JSON.parse(e.target.result);
+                await validateOptions(options);
+                await saveOptionsToStorage(options);
+                await updateBackgroundScript(options);
+                showStatusMessage('Options imported successfully. Reloading...', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } catch (error) {
+                showStatusMessage(`Failed to import options: ${error.message}`, 'error');
+            }
+        };
+        reader.readAsText(file);
+    }
+}
+
+function showStatusMessage(message, type) {
+    const statusElement = document.getElementById('statusMessage');
+    statusElement.textContent = message;
+    statusElement.className = `status-message ${type}`;
+    statusElement.style.display = 'block';
     setTimeout(() => {
-        errorMessage.style.display = 'none';
+        statusElement.style.display = 'none';
     }, 3000);
 }

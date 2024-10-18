@@ -7,8 +7,8 @@ export const defaultUserOptions = {
     bypassWarningsUntil: {}
 };
 
-// List of suspicious domains (including subdomains)
-export const suspiciousDomains = [
+// Convert suspicious domains to a Set for faster lookups
+export const suspiciousDomains = new Set([
     "raw.githubusercontent.com", "github.com", "1drv.ms", "1drv.com", "docs.google.com",
     "drive.google.com", ".azurewebsites.net", "dropbox.com", "mega.nz", "pcloud.com",
     ".amazonaws.com", ".twitter.com", ".web.core.windows.net", ".blob.core.windows.net",
@@ -66,11 +66,11 @@ export const suspiciousDomains = [
     "mailgun.net",
     "strawpoll.me",
     "web.archive.org",
-    "mega.io" // Added here
-];
+    "mega.io"
+]);
 
 // Suspicious file extensions
-export const suspiciousExtensions = [
+export const suspiciousExtensions = new Set([
     ".7z", ".a3x", ".appinstaller", ".application", ".appref-ms", ".appx", ".appxbundle",
     ".arj", ".asd", ".bat", ".bgi", ".bz2", ".cab", ".chm", ".cmd", ".com", ".cpl", ".cs", ".daa",
     ".desktopthemepackfile", ".diagcab", ".dll", ".dmg", ".doc", ".docm", ".dot", ".dotm", ".eml",
@@ -83,29 +83,4 @@ export const suspiciousExtensions = [
     ".tar", ".theme", ".themepack", ".timer", ".url", ".uue", ".vb", ".vbe", ".vbs", ".vhd", ".vhdx",
     ".wbk", ".website", ".wim", ".wiz", ".ws", ".wsf", ".wsh", ".xlam", ".xll", ".xlm", ".xls",
     ".xlsb", ".xlsm", ".xlt", ".xltm", ".xps", ".xsl", ".xz", ".z", ".zip"
-];
-
-// Function to check if a domain is suspicious
-export function isSuspiciousDomain(url) {
-    try {
-        const parsedUrl = new URL(url);
-        const domain = parsedUrl.hostname;
-
-        return suspiciousDomains.some(suspiciousDomain => {
-            if (suspiciousDomain.startsWith('.')) {
-                return domain.endsWith(suspiciousDomain);
-            } else {
-                return domain === suspiciousDomain || domain.endsWith('.' + suspiciousDomain);
-            }
-        });
-    } catch (e) {
-        console.error('Invalid URL:', url);
-        return false;
-    }
-}
-
-// Function to check if a file extension is suspicious
-export function isSuspiciousExtension(fileUrl) {
-    const extension = fileUrl.split('.').pop();
-    return suspiciousExtensions.includes(`.${extension}`);
-}
+]);

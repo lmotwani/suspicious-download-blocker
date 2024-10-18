@@ -1,29 +1,115 @@
 body {
-    font-family: sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+    margin: 0;
     padding: 20px;
-  }
-  
-  .option-group {
-    margin-bottom: 15px;
-  }
-  
-  label {
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1, h2 {
+    color: #2c3e50;
+}
+
+.section {
+    margin-bottom: 20px;
+}
+
+label {
     display: block;
     margin-bottom: 5px;
-  }
-  
-  textarea {
+    font-weight: bold;
+}
+
+select, textarea {
     width: 100%;
-    padding: 5px;
-    border: 1px solid #ccc;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     box-sizing: border-box;
-  }
-  
-  button {
-    padding: 8px 15px;
-    background-color: #4CAF50; /* Green */
-    border: none;
+    font-size: 14px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+button, .file-input-label {
+    background-color: #3498db;
     color: white;
-    text-decoration: none;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
-  }
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+    text-align: center;
+}
+
+button:hover, .file-input-label:hover {
+    background-color: #2980b9;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#importInput {
+    display: none;
+}
+
+.status-message {
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.status-message.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.resources-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.resources-list li {
+    margin-bottom: 10px;
+}
+
+.resources-list a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.resources-list a:hover {
+    text-decoration: underline;
+}
+
+.support-section {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.bmc-button {
+    height: 60px !important;
+    width: 217px !important;
+}

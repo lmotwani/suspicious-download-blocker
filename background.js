@@ -1,10 +1,14 @@
 import { suspiciousDomains, suspiciousExtensions, defaultUserOptions } from './config.js';
 import { getWeekNumber, isSuspiciousDomain, isSuspiciousExtension, showSubtleAlert } from './utils.js';
+import BloomFilter from './utils/bloomFilter.js';
 
 let userOptions = { ...defaultUserOptions };
 const shownDownloadWarnings = new Set();
 
-// Educational Resources
+// Initialize Bloom Filter
+const bloomFilter = new BloomFilter(1000, 5);
+suspiciousDomains.forEach(domain => bloomFilter.add(domain));
+
 const educationalResources = [
     {
         title: "Understanding Phishing Attacks",
@@ -24,17 +28,18 @@ const educationalResources = [
     }
 ];
 
-// Load user options from storage
 async function loadUserOptions() {
     try {
         const data = await chrome.storage.sync.get(['userOptions']);
         userOptions = data.userOptions || { ...defaultUserOptions };
+        if (!userOptions.bypassWarningsUntil) {
+            userOptions.bypassWarningsUntil = {};
+        }
     } catch (error) {
         console.error("Error loading user options:", error);
     }
 }
 
-// Save user options to storage
 async function saveUserOptions() {
     try {
         await chrome.storage.sync.set({ userOptions });
@@ -43,7 +48,6 @@ async function saveUserOptions() {
     }
 }
 
-// Mark site as visited
 async function markSiteVisited(domain) {
     try {
         await chrome.storage.local.set({
@@ -57,7 +61,6 @@ async function markSiteVisited(domain) {
     }
 }
 
-// Check if site has been flagged today
 async function hasSiteBeenFlaggedToday(domain) {
     try {
         const data = await chrome.storage.local.get([domain]);
@@ -69,7 +72,6 @@ async function hasSiteBeenFlaggedToday(domain) {
     }
 }
 
-// Mark site as visited this week
 async function markSiteVisitedThisWeek(domain) {
     try {
         const thisWeek = getWeekNumber(new Date());
@@ -84,7 +86,6 @@ async function markSiteVisitedThisWeek(domain) {
     }
 }
 
-// Check if site has been flagged this week
 async function hasSiteBeenFlaggedThisWeek(domain) {
     try {
         const data = await chrome.storage.local.get([`${domain}_week`]);
@@ -96,18 +97,25 @@ async function hasSiteBeenFlaggedThisWeek(domain) {
     }
 }
 
-// Check URL and show alert if necessary
 async function checkUrlAndShowAlert(url, tabId) {
-    if (userOptions.alertFrequency === 'never') return;
+    if (!userOptions || userOptions.alertFrequency === 'never') return;
 
     try {
         const parsedUrl = new URL(url);
         const domain = parsedUrl.hostname;
 
+        if (!userOptions.bypassWarningsUntil) {
+            userOptions.bypassWarningsUntil = {};
+        }
+
         const bypassUntil = userOptions.bypassWarningsUntil[domain];
         if (bypassUntil && bypassUntil > Date.now()) return;
 
-        if (isSuspiciousDomain(url, userOptions, suspiciousDomains)) {
+        if (!userOptions.trustedDomains) {
+            userOptions.trustedDomains = [];
+        }
+
+        if (!userOptions.trustedDomains.includes(domain) && (isSuspiciousDomain(url, userOptions, suspiciousDomains) || bloomFilter.contains(domain))) {
             const shouldShow = userOptions.alertFrequency === 'always' ||
                 (userOptions.alertFrequency === 'daily' && !(await hasSiteBeenFlaggedToday(domain))) ||
                 (userOptions.alertFrequency === 'weekly' && !(await hasSiteBeenFlaggedThisWeek(domain)));
@@ -128,12 +136,12 @@ async function checkUrlAndShowAlert(url, tabId) {
     }
 }
 
-// Update the icon for a specific tab
 async function updateTabIcon(tabId) {
     try {
         const tab = await chrome.tabs.get(tabId);
         if (tab && tab.url) {
-            const isSuspicious = isSuspiciousDomain(tab.url, userOptions, suspiciousDomains);
+            const domain = new URL(tab.url).hostname;
+            const isSuspicious = bloomFilter.contains(domain) || isSuspiciousDomain(tab.url, userOptions, suspiciousDomains);
             const iconPath = isSuspicious
                 ? {
                     "16": "icons/icon-warning-svg.png",
@@ -156,7 +164,6 @@ async function updateTabIcon(tabId) {
     }
 }
 
-// Show warning popup for downloads
 async function showWarningPopup(downloadItem) {
     const uniqueDownloadId = `${downloadItem.url}-${downloadItem.filename}`;
 
@@ -180,9 +187,39 @@ async function showWarningPopup(downloadItem) {
     }
 }
 
-// Main extension logic
+// New function to export options
+function exportOptions() {
+    const exportData = JSON.stringify(userOptions);
+    const blob = new Blob([exportData], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    chrome.downloads.download({
+        url: url,
+        filename: 'safe_browsing_guard_options.json'
+    });
+}
+
+// New function to import options
+async function importOptions(fileContent) {
+    try {
+        const importedOptions = JSON.parse(fileContent);
+        userOptions = { ...defaultUserOptions, ...importedOptions };
+        await saveUserOptions();
+        return { success: true, message: "Options imported successfully" };
+    } catch (error) {
+        console.error("Error importing options:", error);
+        return { success: false, message: "Failed to import options" };
+    }
+}
+
 (async () => {
     await loadUserOptions();
+
+    if (!suspiciousDomains || suspiciousDomains.size === 0) {
+        console.error("suspiciousDomains is not properly loaded");
+    }
+    if (!suspiciousExtensions || suspiciousExtensions.size === 0) {
+        console.error("suspiciousExtensions is not properly loaded");
+    }
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete' && tab.url) {
@@ -192,7 +229,11 @@ async function showWarningPopup(downloadItem) {
     });
 
     chrome.tabs.onActivated.addListener(async (activeInfo) => {
-        await updateTabIcon(activeInfo.tabId);
+        const tab = await chrome.tabs.get(activeInfo.tabId);
+        if (tab.url) {
+            await updateTabIcon(activeInfo.tabId);
+            await checkUrlAndShowAlert(tab.url, activeInfo.tabId);
+        }
     });
 
     chrome.downloads.onCreated.addListener(async (downloadItem) => {
@@ -213,29 +254,23 @@ async function showWarningPopup(downloadItem) {
                 try {
                     await chrome.downloads.resume(request.downloadId);
                     sendResponse({ success: true });
-                    // Close the popup
-                    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                        chrome.tabs.remove(tabs[0].id);
-                    });
                 } catch (error) {
-                    console.error("Error continuing download:", error);
                     sendResponse({ success: false, error: error.message });
                 }
             },
             async cancelDownload() {
                 try {
-                    await chrome.downloads.cancel(request.downloadId);
                     const downloadItem = await chrome.downloads.search({id: request.downloadId});
-                    if (downloadItem[0] && downloadItem[0].filename) {
-                        await chrome.downloads.removeFile(request.downloadId);
+                    if (downloadItem.length > 0) {
+                        await chrome.downloads.cancel(request.downloadId);
+                        if (downloadItem[0].filename) {
+                            await chrome.downloads.removeFile(request.downloadId);
+                        }
+                        sendResponse({ success: true });
+                    } else {
+                        sendResponse({ success: false, error: "Download not found" });
                     }
-                    sendResponse({ success: true });
-                    // Close the popup
-                    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                        chrome.tabs.remove(tabs[0].id);
-                    });
                 } catch (error) {
-                    console.error("Error canceling download:", error);
                     sendResponse({ success: false, error: error.message });
                 }
             },
@@ -251,6 +286,7 @@ async function showWarningPopup(downloadItem) {
                 const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
                 if (tabs.length > 0) {
                     await updateTabIcon(tabs[0].id);
+                    await checkUrlAndShowAlert(tabs[0].url, tabs[0].id);
                 }
                 sendResponse({ success: true });
             },
@@ -260,6 +296,14 @@ async function showWarningPopup(downloadItem) {
             },
             getEducationalResources() {
                 sendResponse({ success: true, resources: educationalResources });
+            },
+            exportOptions() {
+                exportOptions();
+                sendResponse({ success: true });
+            },
+            async importOptions() {
+                const result = await importOptions(request.fileContent);
+                sendResponse(result);
             }
         };
 
@@ -285,7 +329,6 @@ chrome.runtime.onInstalled.addListener(async () => {
     }
 });
 
-// Make extension icon clickable
 chrome.action.onClicked.addListener((tab) => {
     chrome.runtime.openOptionsPage();
 });
