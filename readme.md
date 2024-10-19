@@ -50,8 +50,8 @@ After installation:
 ## Data Sources
 
 This Chrome extension is based on data from the following sources:
-- **Living Off Trusted Sites (LOTS) Project**: The LOTS Project is a research project that aims to understand the threat landscape of the web. The project maintains a list of suspicious domains that are often used by attackers to host malicious content.
-- **FileSec**: FileSec is a project that aims to provide information about file extensions and their associated risks. The project maintains a list of file extensions that are commonly used by attackers to distribute malware.
+- **[Living Off Trusted Sites (LOTS) Project](https://lots-project.com/)**: The LOTS Project is a research project that aims to understand the threat landscape of the web. The project maintains a list of suspicious domains that are often used by attackers to host malicious content.
+- **[FileSec](https://filesec.io/)**: FileSec is a project that aims to provide information about file extensions and their associated risks. The project maintains a list of file extensions that are commonly used by attackers to distribute malware.
 
 Stay up-to-date with the latest data by regularly checking these sources.
 
