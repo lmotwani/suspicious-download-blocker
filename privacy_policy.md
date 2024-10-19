@@ -10,11 +10,24 @@ Safe Browsing Guard ("we", "our", or "us") is committed to protecting your priva
 
 Safe Browsing Guard is designed to enhance your browsing safety without compromising your privacy. We collect and use information in the following ways:
 
-1. **Browsing Data**: We analyze the URLs of websites you visit to check against our list of suspicious domains. This process occurs entirely on your device, and we do not store or transmit your browsing history.
+1. **Web History**: We analyze the URLs of websites you visit to check against our list of suspicious domains. This process occurs entirely on your device, and we do not store or transmit your browsing history.
 
 2. **Download Information**: When you attempt to download a file, we check the file type and source for potential security risks. This information is processed locally and is not stored or transmitted.
 
 3. **User Preferences**: We store your extension settings (such as trusted domains and alert frequency) locally on your device to provide a personalized experience.
+
+## Data We Do Not Collect
+
+To be explicit, we do not collect, store, or process any of the following types of information:
+
+- Personally identifiable information
+- Health information
+- Financial and payment information
+- Authentication information
+- Personal communications
+- Precise location data
+- User activity (beyond the necessary URL checks)
+- Website content
 
 ## Data Storage and Security
 
@@ -39,3 +52,11 @@ If you have any questions about this Privacy Policy, please contact us at [SBG@l
 ## Consent
 
 By using Safe Browsing Guard, you consent to our Privacy Policy and agree to its terms.
+
+## Data Usage Certifications
+
+We certify that:
+
+1. We do not sell or transfer user data to third parties, apart from the approved use cases.
+2. We do not use or transfer user data for purposes that are unrelated to our extension's single purpose of enhancing browsing safety.
+3. We do not use or transfer user data to determine creditworthiness or for lending purposes.
