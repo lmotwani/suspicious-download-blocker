@@ -11,13 +11,17 @@ export function isSuspiciousDomain(url, userOptions, suspiciousDomains) {
         const parsedUrl = new URL(url);
         const hostname = parsedUrl.hostname;
 
+        console.log(`Checking domain in isSuspiciousDomain: ${hostname}`);
+
         if (!hostname || /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/.test(hostname)) {
+            console.log(`Domain ${hostname} is an IP address or invalid, not suspicious`);
             return false;
         }
 
         if (userOptions && userOptions.trustedDomains) {
             if (userOptions.trustedDomains.some(domain => 
                 hostname === domain || (domain.startsWith('*.') && hostname.endsWith(domain.substring(2))))) {
+                console.log(`Domain ${hostname} is in trusted domains, not suspicious`);
                 return false;
             }
         }
@@ -25,13 +29,24 @@ export function isSuspiciousDomain(url, userOptions, suspiciousDomains) {
         if (userOptions && userOptions.customDomains) {
             if (userOptions.customDomains.some(domain => 
                 hostname === domain || (domain.startsWith('*.') && hostname.endsWith(domain.substring(2))))) {
+                console.log(`Domain ${hostname} is in custom suspicious domains`);
                 return true;
             }
         }
 
         // Convert Set to Array for .some() method
-        return Array.from(suspiciousDomains).some(domain => 
-            hostname === domain || (domain.startsWith('.') && hostname.endsWith(domain)));
+        const isSuspicious = Array.from(suspiciousDomains).some(domain => {
+            if (domain.startsWith('.')) {
+                // For domains starting with a dot, check if it's a subdomain or exact match
+                return hostname.endsWith(domain) && hostname.split('.').length >= domain.split('.').length;
+            } else {
+                // For full domain names, check for exact match or subdomain
+                return hostname === domain || hostname.endsWith('.' + domain);
+            }
+        });
+
+        console.log(`Domain ${hostname} suspicious: ${isSuspicious}`);
+        return isSuspicious;
     } catch (error) {
         console.error("Error parsing URL:", error, url);
         return false;
@@ -43,10 +58,10 @@ export function isSuspiciousExtension(filename, userOptions, suspiciousExtension
         console.error("Invalid filename:", filename);
         return false;
     }
-    const lowerFilename = filename.toLowerCase();
+    const fileExtension = filename.split('.').pop().toLowerCase();
     return (userOptions && userOptions.customExtensions ? 
-        userOptions.customExtensions.some(ext => lowerFilename.endsWith(ext)) : false) ||
-           Array.from(suspiciousExtensions).some(ext => lowerFilename.endsWith(ext));
+        userOptions.customExtensions.some(ext => ext.toLowerCase() === fileExtension) : false) ||
+           Array.from(suspiciousExtensions).some(ext => ext.toLowerCase() === fileExtension);
 }
 
 export async function showSubtleAlert(message, tabId) {

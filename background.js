@@ -1,13 +1,8 @@
 import { suspiciousDomains, suspiciousExtensions, defaultUserOptions } from './config.js';
 import { getWeekNumber, isSuspiciousDomain, isSuspiciousExtension, showSubtleAlert } from './utils.js';
-import BloomFilter from './utils/bloomFilter.js';
 
 let userOptions = { ...defaultUserOptions };
 const shownDownloadWarnings = new Set();
-
-// Initialize Bloom Filter
-const bloomFilter = new BloomFilter(1000, 5);
-suspiciousDomains.forEach(domain => bloomFilter.add(domain));
 
 const educationalResources = [
     {
@@ -104,6 +99,14 @@ async function checkUrlAndShowAlert(url, tabId) {
         const parsedUrl = new URL(url);
         const domain = parsedUrl.hostname;
 
+        console.log(`Checking domain: ${domain}`);
+
+        // Skip Chrome Web Store URLs
+        if (domain === 'chrome.google.com' && parsedUrl.pathname.startsWith('/webstore')) {
+            console.log('Skipping Chrome Web Store URL');
+            return;
+        }
+
         if (!userOptions.bypassWarningsUntil) {
             userOptions.bypassWarningsUntil = {};
         }
@@ -115,7 +118,12 @@ async function checkUrlAndShowAlert(url, tabId) {
             userOptions.trustedDomains = [];
         }
 
-        if (!userOptions.trustedDomains.includes(domain) && (isSuspiciousDomain(url, userOptions, suspiciousDomains) || bloomFilter.contains(domain))) {
+        const suspiciousDomainResult = isSuspiciousDomain(url, userOptions, suspiciousDomains);
+
+        console.log(`isSuspiciousDomain result: ${suspiciousDomainResult}`);
+
+        if (!userOptions.trustedDomains.includes(domain) && suspiciousDomainResult) {
+            console.log(`Domain ${domain} flagged as suspicious`);
             const shouldShow = userOptions.alertFrequency === 'always' ||
                 (userOptions.alertFrequency === 'daily' && !(await hasSiteBeenFlaggedToday(domain))) ||
                 (userOptions.alertFrequency === 'weekly' && !(await hasSiteBeenFlaggedThisWeek(domain)));
@@ -130,6 +138,8 @@ async function checkUrlAndShowAlert(url, tabId) {
                     await markSiteVisitedThisWeek(domain);
                 }
             }
+        } else {
+            console.log(`Domain ${domain} not flagged as suspicious`);
         }
     } catch (error) {
         console.error("Error in checkUrlAndShowAlert:", error);
@@ -141,8 +151,10 @@ async function updateTabIcon(tabId) {
         const tab = await chrome.tabs.get(tabId);
         if (tab && tab.url) {
             const domain = new URL(tab.url).hostname;
-            const isSuspicious = bloomFilter.contains(domain) || isSuspiciousDomain(tab.url, userOptions, suspiciousDomains);
-            const iconPath = isSuspicious
+            console.log(`Updating icon for domain: ${domain}`);
+            const suspiciousDomainResult = isSuspiciousDomain(tab.url, userOptions, suspiciousDomains);
+            console.log(`isSuspiciousDomain result: ${suspiciousDomainResult}`);
+            const iconPath = suspiciousDomainResult
                 ? {
                     "16": "icons/icon-warning-svg.png",
                     "48": "icons/icon-warning-svg.png",
@@ -171,10 +183,27 @@ async function showWarningPopup(downloadItem) {
 
     shownDownloadWarnings.add(uniqueDownloadId);
 
+    let url, domain;
+    if (downloadItem.url.startsWith('blob:')) {
+        url = new URL(downloadItem.referrer);
+        domain = url.hostname;
+    } else {
+        url = new URL(downloadItem.url);
+        domain = url.hostname;
+    }
+
+    const fileExtension = downloadItem.filename.split('.').pop().toLowerCase();
+    
+    const isDomainSuspicious = isSuspiciousDomain(url.href, userOptions, suspiciousDomains);
+    const isExtensionSuspicious = isSuspiciousExtension(fileExtension, userOptions, suspiciousExtensions);
+
     const urlParams = new URLSearchParams({
         url: downloadItem.url,
+        referrer: downloadItem.referrer,
         filename: downloadItem.filename,
-        downloadId: downloadItem.id.toString()
+        downloadId: downloadItem.id.toString(),
+        suspiciousDomain: isDomainSuspicious.toString(),
+        suspiciousExtension: isExtensionSuspicious.toString()
     });
 
     try {
@@ -236,14 +265,32 @@ async function importOptions(fileContent) {
 
     chrome.downloads.onCreated.addListener(async (downloadItem) => {
         try {
-            const url = new URL(downloadItem.url);
-            const domain = url.hostname;
-            
-            if (isSuspiciousDomain(downloadItem.url, userOptions, suspiciousDomains) || 
-                isSuspiciousExtension(downloadItem.filename, userOptions, suspiciousExtensions) ||
-                bloomFilter.contains(domain)) {
-                await chrome.downloads.pause(downloadItem.id);
-                await showWarningPopup(downloadItem);
+            if (downloadItem.url.startsWith('blob:')) {
+                // For blob URLs, we'll check the referrer instead
+                const referrerUrl = new URL(downloadItem.referrer);
+                const domain = referrerUrl.hostname;
+                const fileExtension = downloadItem.filename.split('.').pop().toLowerCase();
+                
+                const isDomainSuspicious = isSuspiciousDomain(referrerUrl.href, userOptions, suspiciousDomains);
+                const isExtensionSuspicious = isSuspiciousExtension(fileExtension, userOptions, suspiciousExtensions);
+
+                if (isDomainSuspicious || isExtensionSuspicious) {
+                    await chrome.downloads.pause(downloadItem.id);
+                    await showWarningPopup(downloadItem);
+                }
+            } else {
+                // For regular URLs, use the existing logic
+                const url = new URL(downloadItem.url);
+                const domain = url.hostname;
+                const fileExtension = downloadItem.filename.split('.').pop().toLowerCase();
+                
+                const isDomainSuspicious = isSuspiciousDomain(downloadItem.url, userOptions, suspiciousDomains);
+                const isExtensionSuspicious = isSuspiciousExtension(fileExtension, userOptions, suspiciousExtensions);
+
+                if (isDomainSuspicious || isExtensionSuspicious) {
+                    await chrome.downloads.pause(downloadItem.id);
+                    await showWarningPopup(downloadItem);
+                }
             }
         } catch (error) {
             console.error("Error handling suspicious download:", error);
