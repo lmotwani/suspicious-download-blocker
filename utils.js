@@ -36,13 +36,18 @@ export function isSuspiciousDomain(url, userOptions, suspiciousDomains) {
 
         // Convert Set to Array for .some() method
         const isSuspicious = Array.from(suspiciousDomains).some(domain => {
+            let match = false;
             if (domain.startsWith('.')) {
                 // For domains starting with a dot, check if it's a subdomain or exact match
-                return hostname.endsWith(domain) && hostname.split('.').length >= domain.split('.').length;
+                match = hostname.endsWith(domain) && hostname.split('.').length >= domain.split('.').length;
             } else {
                 // For full domain names, check for exact match or subdomain
-                return hostname === domain || hostname.endsWith('.' + domain);
+                match = hostname === domain || hostname.endsWith('.' + domain);
             }
+            if (match) {
+                console.log(`Domain ${hostname} matched suspicious domain ${domain}`);
+            }
+            return match;
         });
 
         console.log(`Domain ${hostname} suspicious: ${isSuspicious}`);
