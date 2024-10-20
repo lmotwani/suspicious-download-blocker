@@ -69,10 +69,10 @@ export function isSuspiciousExtension(filename, userOptions, suspiciousExtension
            Array.from(suspiciousExtensions).some(ext => ext.toLowerCase() === fileExtension);
 }
 
-export async function showSubtleAlert(message, tabId) {
+export async function showSubtleAlert(message, tabId, onDismiss) {
     await chrome.scripting.executeScript({
         target: { tabId: tabId },
-        func: (message) => {
+        func: (message, onDismissString) => {
             const alertElement = document.createElement('div');
             alertElement.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -113,6 +113,7 @@ export async function showSubtleAlert(message, tabId) {
             closeBtn.addEventListener('click', () => {
                 alertElement.style.opacity = '0';
                 setTimeout(() => alertElement.remove(), 500);
+                chrome.runtime.sendMessage({ action: 'dismissWarning' });
             });
 
             const changeOptionsBtn = alertElement.querySelector('#changeOptionsBtn');
