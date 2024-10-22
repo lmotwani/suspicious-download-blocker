@@ -1,62 +1,46 @@
 # Privacy Policy for Safe Browsing Guard
 
-Last updated: [20/10/2024]
+Last updated: [Current Date]
 
 ## Introduction
 
-Safe Browsing Guard ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Chrome extension, Safe Browsing Guard.
+Safe Browsing Guard is committed to protecting your privacy. This Privacy Policy explains how our extension collects, uses, and safeguards your information.
 
 ## Information Collection and Use
 
-Safe Browsing Guard is designed to enhance your browsing safety without compromising your privacy. We collect and use information in the following ways:
+Safe Browsing Guard does not collect or transmit any personal data. All processing is done locally on your device. Here's how we use the permissions we request:
 
-1. **Web History**: We analyze the URLs of websites you visit to check against our list of suspicious domains. This process occurs entirely on your device, and we do not store or transmit your browsing history.
+1. **Storage**: We use local storage to save your preferences and to keep track of which sites have been flagged. This information never leaves your device.
 
-2. **Download Information**: When you attempt to download a file, we check the file type and source for potential security risks. This information is processed locally and is not stored or transmitted.
+2. **Downloads**: We monitor your downloads to check for potentially harmful files. This check is performed entirely on your device, and no information about your downloads is sent to our servers or any third parties.
 
-3. **User Preferences**: We store your extension settings (such as trusted domains and alert frequency) locally on your device to provide a personalized experience.
+3. **Scripting**: We use this to inject warning messages directly into web pages when a suspicious site is detected. These scripts only run on your device and do not transmit any data.
 
-## Data We Do Not Collect
+4. **Tabs**: We access tab information to check URLs and update the extension icon. This information is processed locally and is not stored or transmitted.
 
-To be explicit, we do not collect, store, or process any of the following types of information:
+5. **Host Permissions**: We require access to all websites to provide real-time protection against suspicious domains. All checks are performed locally on your device using our built-in lists of suspicious domains and file extensions.
 
-- Personally identifiable information
-- Health information
-- Financial and payment information
-- Authentication information
-- Personal communications
-- Precise location data
-- User activity (beyond the necessary URL checks)
-- Website content
+## Data Storage
 
-## Data Storage and Security
+All data, including your settings and any logs of flagged sites, are stored locally on your device. We do not have access to this data, nor is it synced or transmitted to any external servers.
 
-All data processed by Safe Browsing Guard is stored locally on your device. We do not collect, transmit, or store any personal information on external servers.
-
-## Third-Party Services
-
-Safe Browsing Guard does not share any information with third-party services or websites.
-
-## Your Choices
-
-You can customize the extension's behavior through the options page. This includes setting trusted domains, adjusting alert frequencies, and managing other preferences.
-
-## Changes to This Privacy Policy
+## Changes to This Policy
 
 We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date.
 
 ## Contact Us
 
-If you have any questions about this Privacy Policy, please contact us at [SBG@lokeshmotwani.com].
+If you have any questions about this Privacy Policy, please contact us at [Your Contact Information].
 
 ## Consent
 
 By using Safe Browsing Guard, you consent to our Privacy Policy and agree to its terms.
 
-## Data Usage Certifications
+## Data Usage Compliance
 
-We certify that:
-
-1. We do not sell or transfer user data to third parties, apart from the approved use cases.
-2. We do not use or transfer user data for purposes that are unrelated to our extension's single purpose of enhancing browsing safety.
-3. We do not use or transfer user data to determine creditworthiness or for lending purposes.
+We certify that our data usage complies with the Chrome Web Store developer program policies. The extension:
+1. Only collects necessary data for its core functionality of protecting users from suspicious domains and downloads.
+2. Does not share or sell user data to any third parties.
+3. Processes all data locally on the user's device, enhancing privacy and security.
+4. Provides clear options for users to control their data and the extension's behavior through the settings page.
+5. Does not transmit any personal data or browsing history to external servers.
