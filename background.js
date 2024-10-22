@@ -43,31 +43,52 @@ async function saveUserOptions() {
     }
 }
 
-async function isDismissedToday(domain) {
+async function markSiteVisited(domain) {
     try {
-        const data = await chrome.storage.local.get(['dismissedWarnings']);
-        const dismissedWarnings = data.dismissedWarnings || {};
-        const dismissedTime = dismissedWarnings[domain];
-        if (dismissedTime) {
-            const now = new Date();
-            const dismissedDate = new Date(dismissedTime);
-            return now.toDateString() === dismissedDate.toDateString();
-        }
-        return false;
+        await chrome.storage.local.set({
+            [domain]: {
+                lastVisited: Date.now(),
+                date: new Date().getDate()
+            }
+        });
     } catch (error) {
-        console.error("Error checking dismissed warnings:", error);
+        console.error("Error marking site visited:", error);
+    }
+}
+
+async function hasSiteBeenFlaggedToday(domain) {
+    try {
+        const data = await chrome.storage.local.get([domain]);
+        const visitData = data[domain];
+        return visitData && visitData.date === new Date().getDate();
+    } catch (error) {
+        console.error("Error checking site flags:", error);
         return false;
     }
 }
 
-async function setDismissedWarning(domain) {
+async function markSiteVisitedThisWeek(domain) {
     try {
-        const data = await chrome.storage.local.get(['dismissedWarnings']);
-        const dismissedWarnings = data.dismissedWarnings || {};
-        dismissedWarnings[domain] = Date.now();
-        await chrome.storage.local.set({ dismissedWarnings });
+        const thisWeek = getWeekNumber(new Date());
+        await chrome.storage.local.set({
+            [`${domain}_week`]: {
+                week: thisWeek,
+                timestamp: Date.now()
+            }
+        });
     } catch (error) {
-        console.error("Error setting dismissed warning:", error);
+        console.error("Error marking weekly visit:", error);
+    }
+}
+
+async function hasSiteBeenFlaggedThisWeek(domain) {
+    try {
+        const data = await chrome.storage.local.get([`${domain}_week`]);
+        const weekData = data[`${domain}_week`];
+        return weekData && weekData.week === getWeekNumber(new Date());
+    } catch (error) {
+        console.error("Error checking weekly flags:", error);
+        return false;
     }
 }
 
@@ -95,9 +116,21 @@ async function checkUrlAndShowAlert(url, tabId) {
 
         const suspiciousDomainResult = isSuspiciousDomain(url, userOptions, suspiciousDomains);
 
-        if (!userOptions.trustedDomains.includes(domain) && suspiciousDomainResult && !(await isDismissedToday(domain))) {
-            const alertMessage = `Warning: This website (${domain}) or one of its subdomains is flagged as potentially suspicious. Attackers may use it for phishing or malware distribution. Proceed with caution.`;
-            await showSubtleAlert(alertMessage, tabId);
+        if (!userOptions.trustedDomains.includes(domain) && suspiciousDomainResult) {
+            const shouldShow = userOptions.alertFrequency === 'always' ||
+                (userOptions.alertFrequency === 'daily' && !(await hasSiteBeenFlaggedToday(domain))) ||
+                (userOptions.alertFrequency === 'weekly' && !(await hasSiteBeenFlaggedThisWeek(domain)));
+
+            if (shouldShow) {
+                const alertMessage = `Warning: This website (${domain}) or one of its subdomains is flagged as potentially suspicious. Attackers may use it for phishing or malware distribution. Proceed with caution.`;
+                await showSubtleAlert(alertMessage, tabId);
+
+                if (userOptions.alertFrequency === 'daily') {
+                    await markSiteVisited(domain);
+                } else if (userOptions.alertFrequency === 'weekly') {
+                    await markSiteVisitedThisWeek(domain);
+                }
+            }
         }
     } catch (error) {
         console.error("Error in checkUrlAndShowAlert:", error);
@@ -108,7 +141,6 @@ async function updateTabIcon(tabId) {
     try {
         const tab = await chrome.tabs.get(tabId);
         if (tab && tab.url) {
-            const domain = new URL(tab.url).hostname;
             const suspiciousDomainResult = isSuspiciousDomain(tab.url, userOptions, suspiciousDomains);
             const iconPath = suspiciousDomainResult
                 ? {
@@ -197,23 +229,22 @@ async function importOptions(fileContent) {
 (async () => {
     await loadUserOptions();
 
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete' && tab.url && tab.url.startsWith('http')) {
-            updateTabIcon(tabId).catch(console.error);
-            checkUrlAndShowAlert(tab.url, tabId).catch(console.error);
+            await updateTabIcon(tabId);
+            await checkUrlAndShowAlert(tab.url, tabId);
         }
     });
 
-    chrome.tabs.onActivated.addListener((activeInfo) => {
-        chrome.tabs.get(activeInfo.tabId).then(tab => {
-            if (tab.url && tab.url.startsWith('http')) {
-                updateTabIcon(activeInfo.tabId).catch(console.error);
-                checkUrlAndShowAlert(tab.url, activeInfo.tabId).catch(console.error);
-            }
-        }).catch(console.error);
+    chrome.tabs.onActivated.addListener(async (activeInfo) => {
+        const tab = await chrome.tabs.get(activeInfo.tabId);
+        if (tab.url && tab.url.startsWith('http')) {
+            await updateTabIcon(activeInfo.tabId);
+            await checkUrlAndShowAlert(tab.url, activeInfo.tabId);
+        }
     });
 
-    chrome.downloads.onCreated.addListener((downloadItem) => {
+    chrome.downloads.onCreated.addListener(async (downloadItem) => {
         try {
             if (downloadItem.url.startsWith('blob:')) {
                 const referrerUrl = new URL(downloadItem.referrer);
@@ -224,9 +255,8 @@ async function importOptions(fileContent) {
                 const isExtensionSuspicious = isSuspiciousExtension(fileExtension, userOptions, suspiciousExtensions);
 
                 if (isDomainSuspicious || isExtensionSuspicious) {
-                    chrome.downloads.pause(downloadItem.id).then(() => {
-                        showWarningPopup(downloadItem).catch(console.error);
-                    }).catch(console.error);
+                    await chrome.downloads.pause(downloadItem.id);
+                    await showWarningPopup(downloadItem);
                 }
             } else {
                 const url = new URL(downloadItem.url);
@@ -237,13 +267,12 @@ async function importOptions(fileContent) {
                 const isExtensionSuspicious = isSuspiciousExtension(fileExtension, userOptions, suspiciousExtensions);
 
                 if (isDomainSuspicious || isExtensionSuspicious) {
-                    chrome.downloads.pause(downloadItem.id).then(() => {
-                        showWarningPopup(downloadItem).catch(console.error);
-                    }).catch(console.error);
+                    await chrome.downloads.pause(downloadItem.id);
+                    await showWarningPopup(downloadItem);
                 }
             }
         } catch (error) {
-            console.error("Error handling download:", error);
+            console.error("Error handling suspicious download:", error);
         }
     });
 
@@ -282,12 +311,11 @@ async function importOptions(fileContent) {
             async updateUserOptions() {
                 userOptions = request.options;
                 await saveUserOptions();
-                chrome.tabs.query({ active: true, currentWindow: true }).then(tabs => {
-                    if (tabs.length > 0) {
-                        updateTabIcon(tabs[0].id).catch(console.error);
-                        checkUrlAndShowAlert(tabs[0].url, tabs[0].id).catch(console.error);
-                    }
-                }).catch(console.error);
+                const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tabs.length > 0) {
+                    await updateTabIcon(tabs[0].id);
+                    await checkUrlAndShowAlert(tabs[0].url, tabs[0].id);
+                }
                 sendResponse({ success: true });
             },
             async openOptionsPage() {
@@ -304,15 +332,6 @@ async function importOptions(fileContent) {
             async importOptions() {
                 const result = await importOptions(request.fileContent);
                 sendResponse(result);
-            },
-            async dismissWarning() {
-                if (sender.tab && sender.tab.url) {
-                    const domain = new URL(sender.tab.url).hostname;
-                    await setDismissedWarning(domain);
-                    sendResponse({ success: true });
-                } else {
-                    sendResponse({ success: false, error: "Unable to determine the domain" });
-                }
             }
         };
 
@@ -324,16 +343,20 @@ async function importOptions(fileContent) {
     });
 })();
 
-chrome.runtime.onInstalled.addListener(() => {
-    chrome.action.setIcon({
-        path: {
-            "16": "icons/icon16.png",
-            "48": "icons/icon48.png",
-            "128": "icons/icon128.png"
-        }
-    }).catch(console.error);
+chrome.runtime.onInstalled.addListener(async () => {
+    try {
+        await chrome.action.setIcon({
+            path: {
+                "16": "icons/icon16.png",
+                "48": "icons/icon48.png",
+                "128": "icons/icon128.png"
+            }
+        });
+    } catch (error) {
+        console.error("Error setting default icon:", error);
+    }
 });
 
 chrome.action.onClicked.addListener((tab) => {
-    chrome.runtime.openOptionsPage().catch(console.error);
+    chrome.runtime.openOptionsPage();
 });

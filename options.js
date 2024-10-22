@@ -12,7 +12,9 @@ async function loadOptions() {
         const options = userOptions || getDefaultOptions();
         populateFormFields(options);
     } catch (error) {
-        showStatusMessage('Error loading options. Please try again.', 'error');
+        console.error('Error loading options:', error);
+        showStatusMessage('Error loading options. Using default options.', 'error');
+        populateFormFields(getDefaultOptions());
     }
 }
 
@@ -26,10 +28,10 @@ function getDefaultOptions() {
 }
 
 function populateFormFields(options) {
-    document.getElementById('alertFrequency').value = options.alertFrequency;
-    document.getElementById('customDomains').value = options.customDomains.join('\n');
-    document.getElementById('customExtensions').value = options.customExtensions.join('\n');
-    document.getElementById('trustedDomains').value = options.trustedDomains.join('\n');
+    document.getElementById('alertFrequency').value = options.alertFrequency || 'daily';
+    document.getElementById('customDomains').value = (options.customDomains || []).join('\n');
+    document.getElementById('customExtensions').value = (options.customExtensions || []).join('\n');
+    document.getElementById('trustedDomains').value = (options.trustedDomains || []).join('\n');
 }
 
 async function loadEducationalResources() {

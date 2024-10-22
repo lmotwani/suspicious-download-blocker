@@ -11,17 +11,13 @@ export function isSuspiciousDomain(url, userOptions, suspiciousDomains) {
         const parsedUrl = new URL(url);
         const hostname = parsedUrl.hostname;
 
-        console.log(`Checking domain in isSuspiciousDomain: ${hostname}`);
-
         if (!hostname || /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/.test(hostname)) {
-            console.log(`Domain ${hostname} is an IP address or invalid, not suspicious`);
             return false;
         }
 
         if (userOptions && userOptions.trustedDomains) {
             if (userOptions.trustedDomains.some(domain => 
                 hostname === domain || (domain.startsWith('*.') && hostname.endsWith(domain.substring(2))))) {
-                console.log(`Domain ${hostname} is in trusted domains, not suspicious`);
                 return false;
             }
         }
@@ -29,29 +25,20 @@ export function isSuspiciousDomain(url, userOptions, suspiciousDomains) {
         if (userOptions && userOptions.customDomains) {
             if (userOptions.customDomains.some(domain => 
                 hostname === domain || (domain.startsWith('*.') && hostname.endsWith(domain.substring(2))))) {
-                console.log(`Domain ${hostname} is in custom suspicious domains`);
                 return true;
             }
         }
 
         // Convert Set to Array for .some() method
-        const isSuspicious = Array.from(suspiciousDomains).some(domain => {
-            let match = false;
+        return Array.from(suspiciousDomains).some(domain => {
             if (domain.startsWith('.')) {
                 // For domains starting with a dot, check if it's a subdomain or exact match
-                match = hostname.endsWith(domain) && hostname.split('.').length >= domain.split('.').length;
+                return hostname.endsWith(domain) && hostname.split('.').length >= domain.split('.').length;
             } else {
                 // For full domain names, check for exact match or subdomain
-                match = hostname === domain || hostname.endsWith('.' + domain);
+                return hostname === domain || hostname.endsWith('.' + domain);
             }
-            if (match) {
-                console.log(`Domain ${hostname} matched suspicious domain ${domain}`);
-            }
-            return match;
         });
-
-        console.log(`Domain ${hostname} suspicious: ${isSuspicious}`);
-        return isSuspicious;
     } catch (error) {
         console.error("Error parsing URL:", error, url);
         return false;
@@ -60,7 +47,6 @@ export function isSuspiciousDomain(url, userOptions, suspiciousDomains) {
 
 export function isSuspiciousExtension(filename, userOptions, suspiciousExtensions) {
     if (typeof filename !== 'string') {
-        console.error("Invalid filename:", filename);
         return false;
     }
     const fileExtension = filename.split('.').pop().toLowerCase();

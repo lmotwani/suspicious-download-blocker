@@ -1,19 +1,17 @@
 {
   "manifest_version": 3,
   "name": "Safe Browsing Guard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Protects you from suspicious domains and potentially harmful downloads.",
   "permissions": [
     "storage",
     "downloads",
-    "webRequest",
     "scripting",
-    "alarms",
-    "tabs",
-    "activeTab"
+    "tabs"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js",
