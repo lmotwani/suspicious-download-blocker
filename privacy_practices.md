@@ -28,5 +28,3 @@ We certify that our data usage complies with the Chrome Web Store developer prog
 4. Provides clear options for users to control their data and the extension's behavior through the settings page.
 5. Does not transmit any personal data or browsing history to external servers.
 
-## Screenshots
-[Note: At least one screenshot or video demonstrating the extension's functionality needs to be added to the Chrome Web Store listing.]
